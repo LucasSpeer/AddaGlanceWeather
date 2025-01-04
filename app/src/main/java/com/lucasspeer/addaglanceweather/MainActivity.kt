@@ -4,30 +4,25 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.lucasspeer.addaglanceweather.ui.theme.AddaGlanceWeatherTheme
+import com.lucasspeer.addaglanceweather.weatherCard.WeatherCard
+import com.lucasspeer.addaglanceweather.weatherCard.WeatherDescription
+import com.lucasspeer.addaglanceweather.weatherCard.WeatherState
+import java.time.LocalDate
+import java.time.format.TextStyle
+import java.util.Locale
+
+var useCelcius: Boolean = false
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,9 +31,37 @@ class MainActivity : ComponentActivity() {
         setContent {
             AddaGlanceWeatherTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    CurrentWeatherCard(modifier = Modifier
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Column(modifier = Modifier
                         .padding(innerPadding)
-                        .padding(horizontal = 16.dp))
+                        .padding(horizontal = 16.dp)) {
+                        CurrentWeatherCard()
+                        Spacer(modifier = Modifier.height(12.dp))
+                        WeatherCard(state = WeatherState(
+                            "Tomorrow",
+                            WeatherDescription.OVERCAST,
+                            20,
+                            LocalDate.now().plusDays(1)
+                        ))
+                        Spacer(modifier = Modifier.height(12.dp))
+                        GenericWeatherCard(
+                            LocalDate.now().plusDays(2),
+                            WeatherDescription.PARTLY_CLOUDY,
+                            16
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        GenericWeatherCard(
+                            LocalDate.now().plusDays(3),
+                            WeatherDescription.RAIN,
+                            12
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        GenericWeatherCard(
+                            LocalDate.now().plusDays(4),
+                            WeatherDescription.SNOW,
+                            -2
+                        )
+                    }
                 }
             }
         }
@@ -46,28 +69,22 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun CurrentWeatherCard(modifier: Modifier = Modifier) {
-    // Add padding around our message
-    Column( modifier =  modifier.background(color = MaterialTheme.colorScheme.secondary, shape = RoundedCornerShape(8.dp))
-        .height(height = 150.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = modifier.fillMaxWidth().fillMaxHeight()
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.outline_wb_sunny_100),
-                contentDescription = "Current Weather Icon", //TODO add weather
-                Modifier.size(42.dp)
-            )
-            // Add a horizontal space between the image and the column
-            Spacer(modifier = Modifier.width(8.dp))
-            Column (modifier = Modifier.fillMaxHeight()){
-                Text(text = "Sunny", color = MaterialTheme.colorScheme.primary, fontSize = 24.sp, fontFamily = FontFamily.Default, fontWeight = FontWeight.Bold)
-                // Add a vertical space between the author and message texts
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(text = "84°F", color = MaterialTheme.colorScheme.primary)
-            }
-        }
-    }
+fun GenericWeatherCard(date: LocalDate, description: WeatherDescription, temp: Int) {
+    return WeatherCard(state = WeatherState(
+        date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.US),
+        description,
+        temp,
+        date,
+    ))
+}
+
+@Preview(showBackground = true)
+@Composable
+fun CurrentWeatherCard() {
+    WeatherCard(state = WeatherState(
+        "Today",
+        WeatherDescription.SUNNY,
+        25,
+        LocalDate.now(),
+    ))
 }
