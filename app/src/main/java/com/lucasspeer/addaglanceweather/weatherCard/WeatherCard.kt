@@ -32,6 +32,10 @@ import com.lucasspeer.addaglanceweather.ui.theme.RaisinBlack
 import com.lucasspeer.addaglanceweather.useCelcius
 import java.time.LocalDate
 import kotlin.math.roundToInt
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import com.lucasspeer.addaglanceweather.WeatherResponse
 
 enum class WeatherDescription {
     SUNNY {
@@ -144,7 +148,32 @@ class WeatherState(
 }
 
 @Composable
-fun WeatherCard(state: WeatherState) {
+fun WeatherCard(weather: WeatherResponse?) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.Start
+        ) {
+            if (weather != null) {
+                Text(text = weather.location.name, style = MaterialTheme.typography.headlineSmall)
+                Text(text = "${weather.current.tempC}°C", style = MaterialTheme.typography.headlineMedium)
+                Text(text = weather.current.condition.description, style = MaterialTheme.typography.bodyLarge)
+                Text(text = "Cloud Cover: ${weather.current.cloud}%", style = MaterialTheme.typography.bodyMedium)
+                Text(text = "Humidity: ${weather.current.humidity}%", style = MaterialTheme.typography.bodyMedium)
+            } else {
+                Text(text = "Loading weather...", style = MaterialTheme.typography.bodyLarge)
+            }
+        }
+    }
+}
+
+@Composable
+fun WeatherCardOld(state: WeatherState) {
     Column( modifier =  Modifier.height(height = 120.dp)
     ) {
         Text(

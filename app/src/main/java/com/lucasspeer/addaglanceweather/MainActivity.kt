@@ -11,16 +11,38 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.lucasspeer.addaglanceweather.ui.theme.AddaGlanceWeatherTheme
 import com.lucasspeer.addaglanceweather.weatherCard.WeatherCard
-import com.lucasspeer.addaglanceweather.weatherCard.WeatherDescription
-import com.lucasspeer.addaglanceweather.weatherCard.WeatherState
-import java.time.LocalDate
-import java.time.format.TextStyle
-import java.util.Locale
+
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
+import androidx.lifecycle.viewmodel.compose.viewModel
+
+class WeatherViewModel(private val apiKey: String) : ViewModel() {
+
+    private val weatherFetcher = WeatherFetcher(apiKey)
+
+    private val _weatherData = MutableLiveData<WeatherResponse?>()
+    val weatherData: LiveData<WeatherResponse?> = _weatherData
+
+    fun loadWeather(location: String) {
+        viewModelScope.launch {
+            weatherFetcher.fetchWeather(location) { weather ->
+                _weatherData.postValue(weather)
+            }
+        }
+    }
+}
 
 var useCelcius: Boolean = false
 
@@ -28,6 +50,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         setContent {
             AddaGlanceWeatherTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -35,32 +58,7 @@ class MainActivity : ComponentActivity() {
                     Column(modifier = Modifier
                         .padding(innerPadding)
                         .padding(horizontal = 16.dp)) {
-                        CurrentWeatherCard()
-                        Spacer(modifier = Modifier.height(12.dp))
-                        WeatherCard(state = WeatherState(
-                            "Tomorrow",
-                            WeatherDescription.OVERCAST,
-                            20,
-                            LocalDate.now().plusDays(1)
-                        ))
-                        Spacer(modifier = Modifier.height(12.dp))
-                        GenericWeatherCard(
-                            LocalDate.now().plusDays(2),
-                            WeatherDescription.PARTLY_CLOUDY,
-                            16
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        GenericWeatherCard(
-                            LocalDate.now().plusDays(3),
-                            WeatherDescription.RAIN,
-                            12
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        GenericWeatherCard(
-                            LocalDate.now().plusDays(4),
-                            WeatherDescription.SNOW,
-                            -2
-                        )
+                        WeatherScreen()
                     }
                 }
             }
@@ -68,23 +66,25 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
 @Composable
-fun GenericWeatherCard(date: LocalDate, description: WeatherDescription, temp: Int) {
-    return WeatherCard(state = WeatherState(
-        date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.US),
-        description,
-        temp,
-        date,
-    ))
+fun WeatherScreen(viewModel: WeatherViewModel = viewModel(factory = WeatherViewModelFactory(
+    stringResource(R.string.api_key)
+))) {
+    val weather by viewModel.weatherData.observeAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadWeather("Minneapolis") // Replace with dynamic location if needed
+    }
+
+    WeatherCard(weather)
 }
 
-@Preview(showBackground = true)
-@Composable
-fun CurrentWeatherCard() {
-    WeatherCard(state = WeatherState(
-        "Today",
-        WeatherDescription.SUNNY,
-        25,
-        LocalDate.now(),
-    ))
+class WeatherViewModelFactory(private val apiKey: String) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(WeatherViewModel::class.java)) {
+            return WeatherViewModel(apiKey) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
 }
