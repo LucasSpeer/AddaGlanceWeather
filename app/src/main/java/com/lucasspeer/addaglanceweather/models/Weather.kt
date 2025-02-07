@@ -1,4 +1,4 @@
-package com.lucasspeer.addaglanceweather
+package com.lucasspeer.addaglanceweather.models
 
 import com.google.gson.annotations.SerializedName
 

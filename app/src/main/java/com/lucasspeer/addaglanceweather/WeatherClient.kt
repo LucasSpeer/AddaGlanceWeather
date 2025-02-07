@@ -1,12 +1,16 @@
 package com.lucasspeer.addaglanceweather
 
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+import android.util.Log
+import com.lucasspeer.addaglanceweather.models.ForecastResponse
+import com.lucasspeer.addaglanceweather.models.WeatherResponse
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
+import java.util.logging.Logger
 
 interface WeatherApiService {
     @GET("current.json")
@@ -14,6 +18,13 @@ interface WeatherApiService {
         @Query("key") apiKey: String,
         @Query("q") location: String
     ): Call<WeatherResponse>
+
+    @GET("forecast.json")
+    fun getForecastWeather(
+        @Query("key") apiKey: String,
+        @Query("q") location: String,
+        @Query("days") days: Int = 3    //TODO Get weatherAPI to return more than 3 days
+    ): Call<ForecastResponse>
 }
 
 object RetrofitClient {
@@ -42,6 +53,20 @@ class WeatherFetcher(private val apiKey: String) {
             }
 
             override fun onFailure(call: Call<WeatherResponse>, t: Throwable) {
+                callback(null)
+            }
+        })
+    }
+
+    fun fetchForecast(location: String, callback: (ForecastResponse?) -> Unit) {
+        val call = RetrofitClient.instance.getForecastWeather(apiKey, location)
+
+        call.enqueue(object : Callback<ForecastResponse> {
+            override fun onResponse(call: Call<ForecastResponse>, response: Response<ForecastResponse>) {
+                callback(response.body())
+            }
+
+            override fun onFailure(call: Call<ForecastResponse>, t: Throwable) {
                 callback(null)
             }
         })
